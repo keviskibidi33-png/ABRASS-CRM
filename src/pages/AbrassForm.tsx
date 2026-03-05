@@ -7,6 +7,8 @@ import type { AbrassPayload } from '@/types'
 
 const DRAFT_KEY = 'abrass_form_draft_v1'
 const DEBOUNCE_MS = 700
+const REVISORES = ['-', 'FABIAN LA ROSA'] as const
+const APROBADORES = ['-', 'IRMA COAQUIRA'] as const
 const TAMIZ_ROWS = [
     { pasante: '1 1/2', retenido: '1' },
     { pasante: '1', retenido: '3/4' },
@@ -19,6 +21,20 @@ const TAMIZ_ROWS = [
 
 const ESFERAS_CANTIDAD = ['12', '11', '8', '6'] as const
 const ESFERAS_RANGO = ['4975 - 5025', '4555 - 4605', '3310 - 3350', '2485 - 2515'] as const
+
+const EQUIPO_OPTIONS = {
+    horno_codigo: ['-', 'EQP-0049'],
+    maquina_los_angeles_codigo: ['-', 'EQP-0043'],
+    balanza_1g_codigo: ['-', 'EQP-0054'],
+    malla_no_12_codigo: ['-', 'INS-0144'],
+    malla_no_4_codigo: ['-', 'INS-0053'],
+} as const
+
+const withCurrentOption = (value: string | null | undefined, base: readonly string[]) => {
+    const current = (value ?? '').trim()
+    if (!current || base.includes(current)) return base
+    return [...base, current]
+}
 
 type TamizFieldKey =
     | 'gradacion_a_tamiz_g'
@@ -44,6 +60,43 @@ const ITEM_ROWS: ReadonlyArray<{ item: string; descripcion: string; unidad: stri
     { item: 'f', descripcion: 'Perdida de masa por lavado ((b-d)/a)*100', unidad: '%', key: 'item_f_perdida_lavado_pct' },
 ]
 
+const GRADACION_EDITABLE_ROWS: Record<TamizFieldKey, readonly boolean[]> = {
+    // Filas por malla (de arriba hacia abajo):
+    // 0: 1 1/2-1, 1: 1-3/4, 2: 3/4-1/2, 3: 1/2-3/8, 4: 3/8-1/4, 5: 1/4-No.4, 6: No.4-No.8
+    gradacion_a_tamiz_g: [true, true, true, true, false, false, false],
+    gradacion_b_tamiz_g: [false, false, true, true, false, false, false],
+    gradacion_c_tamiz_g: [false, false, false, false, true, true, false],
+    gradacion_d_tamiz_g: [false, false, false, false, false, false, true],
+}
+
+const isGradacionEditable = (key: TamizFieldKey, rowIndex: number) => Boolean(GRADACION_EDITABLE_ROWS[key]?.[rowIndex])
+
+const sanitizeGradacionField = (key: TamizFieldKey, values?: Array<number | null>): Array<number | null> =>
+    Array.from({ length: TAMIZ_ROWS.length }, (_, idx) => {
+        if (!isGradacionEditable(key, idx)) return null
+        return values?.[idx] ?? null
+    })
+
+const sanitizeGradaciones = (payload: AbrassPayload): AbrassPayload => ({
+    ...payload,
+    gradacion_a_tamiz_g: sanitizeGradacionField('gradacion_a_tamiz_g', payload.gradacion_a_tamiz_g),
+    gradacion_b_tamiz_g: sanitizeGradacionField('gradacion_b_tamiz_g', payload.gradacion_b_tamiz_g),
+    gradacion_c_tamiz_g: sanitizeGradacionField('gradacion_c_tamiz_g', payload.gradacion_c_tamiz_g),
+    gradacion_d_tamiz_g: sanitizeGradacionField('gradacion_d_tamiz_g', payload.gradacion_d_tamiz_g),
+})
+
+const sumGradacionColumn = (key: TamizFieldKey, values: Array<number | null>) =>
+    Number(
+        values
+            .reduce((acc, current, idx) => acc + (isGradacionEditable(key, idx) ? (current ?? 0) : 0), 0)
+            .toFixed(4),
+    )
+
+const formatComputedNumber = (value: number) => {
+    if (Number.isInteger(value)) return String(value)
+    return value.toFixed(4).replace(/\.?0+$/, '')
+}
+
 const empty4 = () => [null, null, null, null] as Array<number | null>
 const empty7 = () => Array.from({ length: 7 }, () => null as number | null)
 const parseNum = (v: string) => {
@@ -53,6 +106,13 @@ const parseNum = (v: string) => {
 }
 
 const getCurrentYearShort = () => new Date().getFullYear().toString().slice(-2)
+const formatTodayShortDate = () => {
+    const d = new Date()
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const yy = String(d.getFullYear()).slice(-2)
+    return `${dd}/${mm}/${yy}`
+}
 
 const normalizeMuestraCode = (raw: string): string => {
     const value = raw.trim().toUpperCase()
@@ -112,7 +172,7 @@ const getEnsayoId = () => {
 const initialState = (): AbrassPayload => ({
     muestra: '',
     numero_ot: '',
-    fecha_ensayo: '',
+    fecha_ensayo: formatTodayShortDate(),
     realizado_por: '',
     masa_muestra_inicial_g: null,
     masa_muestra_inicial_seca_despues_lavado_g: null,
@@ -130,16 +190,16 @@ const initialState = (): AbrassPayload => ({
     item_d_masa_final_lavada_seca_constante_g: empty4(),
     item_e_perdida_abrasion_pct: empty4(),
     item_f_perdida_lavado_pct: empty4(),
-    horno_codigo: 'EQP-0049',
-    maquina_los_angeles_codigo: 'EQP-0043',
-    balanza_1g_codigo: 'EQP-0054',
-    malla_no_12_codigo: 'INS-0144',
-    malla_no_4_codigo: 'INS-0053',
+    horno_codigo: '-',
+    maquina_los_angeles_codigo: '-',
+    balanza_1g_codigo: '-',
+    malla_no_12_codigo: '-',
+    malla_no_4_codigo: '-',
     observaciones: '',
     revisado_por: '-',
-    revisado_fecha: '',
+    revisado_fecha: formatTodayShortDate(),
     aprobado_por: '-',
-    aprobado_fecha: '',
+    aprobado_fecha: formatTodayShortDate(),
 })
 
 export default function AbrassForm() {
@@ -152,7 +212,7 @@ export default function AbrassForm() {
         const raw = localStorage.getItem(`${DRAFT_KEY}:${ensayoId ?? 'new'}`)
         if (!raw) return
         try {
-            setForm({ ...initialState(), ...JSON.parse(raw) })
+            setForm(sanitizeGradaciones({ ...initialState(), ...JSON.parse(raw) }))
         } catch {
             // ignore draft corruption
         }
@@ -172,7 +232,7 @@ export default function AbrassForm() {
             setLoadingEdit(true)
             try {
                 const detail = await getAbrassEnsayoDetail(ensayoId)
-                if (!cancel && detail.payload) setForm({ ...initialState(), ...detail.payload })
+                if (!cancel && detail.payload) setForm(sanitizeGradaciones({ ...initialState(), ...detail.payload }))
             } catch {
                 toast.error('No se pudo cargar ensayo ABRASS.')
             } finally {
@@ -195,6 +255,7 @@ export default function AbrassForm() {
     }, [])
 
     const setArray = useCallback((k: TamizFieldKey, i: number, raw: string) => {
+        if (!isGradacionEditable(k, i)) return
         setForm((p) => {
             const next = [...p[k]]
             next[i] = parseNum(raw)
@@ -218,10 +279,19 @@ export default function AbrassForm() {
 
     const save = useCallback(async (download: boolean) => {
         if (!form.muestra || !form.numero_ot || !form.realizado_por) return toast.error('Complete Muestra, N OT y Realizado por.')
+        const payload = sanitizeGradaciones({
+            ...form,
+            item_a_masa_original_g: [
+                sumGradacionColumn('gradacion_a_tamiz_g', form.gradacion_a_tamiz_g),
+                sumGradacionColumn('gradacion_b_tamiz_g', form.gradacion_b_tamiz_g),
+                sumGradacionColumn('gradacion_c_tamiz_g', form.gradacion_c_tamiz_g),
+                sumGradacionColumn('gradacion_d_tamiz_g', form.gradacion_d_tamiz_g),
+            ],
+        })
         setLoading(true)
         try {
             if (download) {
-                const { blob } = await saveAndDownloadAbrassExcel(form, ensayoId ?? undefined)
+                const { blob } = await saveAndDownloadAbrassExcel(payload, ensayoId ?? undefined)
                 const url = URL.createObjectURL(blob)
                 const a = document.createElement('a')
                 a.href = url
@@ -229,7 +299,7 @@ export default function AbrassForm() {
                 a.click()
                 URL.revokeObjectURL(url)
             } else {
-                await saveAbrassEnsayo(form, ensayoId ?? undefined)
+                await saveAbrassEnsayo(payload, ensayoId ?? undefined)
             }
             localStorage.removeItem(`${DRAFT_KEY}:${ensayoId ?? 'new'}`)
             setForm(initialState())
@@ -243,6 +313,20 @@ export default function AbrassForm() {
             setLoading(false)
         }
     }, [ensayoId, form])
+
+    const gradacionTotals = useMemo(
+        () => ({
+            a: sumGradacionColumn('gradacion_a_tamiz_g', form.gradacion_a_tamiz_g),
+            b: sumGradacionColumn('gradacion_b_tamiz_g', form.gradacion_b_tamiz_g),
+            c: sumGradacionColumn('gradacion_c_tamiz_g', form.gradacion_c_tamiz_g),
+            d: sumGradacionColumn('gradacion_d_tamiz_g', form.gradacion_d_tamiz_g),
+        }),
+        [form.gradacion_a_tamiz_g, form.gradacion_b_tamiz_g, form.gradacion_c_tamiz_g, form.gradacion_d_tamiz_g],
+    )
+    const itemAMasaOriginalComputed = useMemo(
+        () => [gradacionTotals.a, gradacionTotals.b, gradacionTotals.c, gradacionTotals.d] as const,
+        [gradacionTotals.a, gradacionTotals.b, gradacionTotals.c, gradacionTotals.d],
+    )
 
     const requiresSI = form.requiere_lavado === 'SI'
     const requiresNO = form.requiere_lavado === 'NO'
@@ -450,10 +534,10 @@ export default function AbrassForm() {
                                     <tr>
                                         <th className="w-24 border-r border-slate-300 px-2 py-1">Pasante</th>
                                         <th className="w-24 border-r border-slate-300 px-2 py-1">Retenido</th>
-                                        <th className="w-32 border-r border-slate-300 px-2 py-1">A</th>
-                                        <th className="w-32 border-r border-slate-300 px-2 py-1">B</th>
-                                        <th className="w-32 border-r border-slate-300 px-2 py-1">C</th>
-                                        <th className="w-32 px-2 py-1">D</th>
+                                        <th className="w-32 border-r border-slate-300 px-2 py-1">Gradación A</th>
+                                        <th className="w-32 border-r border-slate-300 px-2 py-1">Gradación B</th>
+                                        <th className="w-32 border-r border-slate-300 px-2 py-1">Gradación C</th>
+                                        <th className="w-32 px-2 py-1">Gradación D</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -461,44 +545,59 @@ export default function AbrassForm() {
                                         <tr key={`${row.pasante}-${row.retenido}`}>
                                             <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{row.pasante}</td>
                                             <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{row.retenido}</td>
-                                            <td className="border-t border-r border-slate-300 p-1">
+                                            <td className={`border-t border-r border-slate-300 p-1 ${isGradacionEditable('gradacion_a_tamiz_g', i) ? 'bg-slate-200/80' : 'bg-slate-50'}`}>
                                                 <input
-                                                    type="number"
+                                                    type={isGradacionEditable('gradacion_a_tamiz_g', i) ? 'number' : 'text'}
                                                     step="any"
-                                                    className={denseInputClass}
-                                                    value={form.gradacion_a_tamiz_g[i] ?? ''}
+                                                    className={`${denseInputClass} ${isGradacionEditable('gradacion_a_tamiz_g', i) ? 'border-slate-400 bg-slate-200 font-medium' : 'cursor-not-allowed bg-slate-100 text-center text-slate-500'}`}
+                                                    value={isGradacionEditable('gradacion_a_tamiz_g', i) ? (form.gradacion_a_tamiz_g[i] ?? '') : '-'}
                                                     onChange={(e) => setArray('gradacion_a_tamiz_g', i, e.target.value)}
+                                                    readOnly={!isGradacionEditable('gradacion_a_tamiz_g', i)}
+                                                    tabIndex={isGradacionEditable('gradacion_a_tamiz_g', i) ? 0 : -1}
                                                 />
                                             </td>
-                                            <td className="border-t border-r border-slate-300 p-1">
+                                            <td className={`border-t border-r border-slate-300 p-1 ${isGradacionEditable('gradacion_b_tamiz_g', i) ? 'bg-slate-200/80' : 'bg-slate-50'}`}>
                                                 <input
-                                                    type="number"
+                                                    type={isGradacionEditable('gradacion_b_tamiz_g', i) ? 'number' : 'text'}
                                                     step="any"
-                                                    className={denseInputClass}
-                                                    value={form.gradacion_b_tamiz_g[i] ?? ''}
+                                                    className={`${denseInputClass} ${isGradacionEditable('gradacion_b_tamiz_g', i) ? 'border-slate-400 bg-slate-200 font-medium' : 'cursor-not-allowed bg-slate-100 text-center text-slate-500'}`}
+                                                    value={isGradacionEditable('gradacion_b_tamiz_g', i) ? (form.gradacion_b_tamiz_g[i] ?? '') : '-'}
                                                     onChange={(e) => setArray('gradacion_b_tamiz_g', i, e.target.value)}
+                                                    readOnly={!isGradacionEditable('gradacion_b_tamiz_g', i)}
+                                                    tabIndex={isGradacionEditable('gradacion_b_tamiz_g', i) ? 0 : -1}
                                                 />
                                             </td>
-                                            <td className="border-t border-r border-slate-300 p-1">
+                                            <td className={`border-t border-r border-slate-300 p-1 ${isGradacionEditable('gradacion_c_tamiz_g', i) ? 'bg-slate-200/80' : 'bg-slate-50'}`}>
                                                 <input
-                                                    type="number"
+                                                    type={isGradacionEditable('gradacion_c_tamiz_g', i) ? 'number' : 'text'}
                                                     step="any"
-                                                    className={denseInputClass}
-                                                    value={form.gradacion_c_tamiz_g[i] ?? ''}
+                                                    className={`${denseInputClass} ${isGradacionEditable('gradacion_c_tamiz_g', i) ? 'border-slate-400 bg-slate-200 font-medium' : 'cursor-not-allowed bg-slate-100 text-center text-slate-500'}`}
+                                                    value={isGradacionEditable('gradacion_c_tamiz_g', i) ? (form.gradacion_c_tamiz_g[i] ?? '') : '-'}
                                                     onChange={(e) => setArray('gradacion_c_tamiz_g', i, e.target.value)}
+                                                    readOnly={!isGradacionEditable('gradacion_c_tamiz_g', i)}
+                                                    tabIndex={isGradacionEditable('gradacion_c_tamiz_g', i) ? 0 : -1}
                                                 />
                                             </td>
-                                            <td className="border-t border-slate-300 p-1">
+                                            <td className={`border-t border-slate-300 p-1 ${isGradacionEditable('gradacion_d_tamiz_g', i) ? 'bg-slate-200/80' : 'bg-slate-50'}`}>
                                                 <input
-                                                    type="number"
+                                                    type={isGradacionEditable('gradacion_d_tamiz_g', i) ? 'number' : 'text'}
                                                     step="any"
-                                                    className={denseInputClass}
-                                                    value={form.gradacion_d_tamiz_g[i] ?? ''}
+                                                    className={`${denseInputClass} ${isGradacionEditable('gradacion_d_tamiz_g', i) ? 'border-slate-400 bg-slate-200 font-medium' : 'cursor-not-allowed bg-slate-100 text-center text-slate-500'}`}
+                                                    value={isGradacionEditable('gradacion_d_tamiz_g', i) ? (form.gradacion_d_tamiz_g[i] ?? '') : '-'}
                                                     onChange={(e) => setArray('gradacion_d_tamiz_g', i, e.target.value)}
+                                                    readOnly={!isGradacionEditable('gradacion_d_tamiz_g', i)}
+                                                    tabIndex={isGradacionEditable('gradacion_d_tamiz_g', i) ? 0 : -1}
                                                 />
                                             </td>
                                         </tr>
                                     ))}
+                                    <tr className="bg-slate-50 font-semibold text-slate-900">
+                                        <td className="border-t border-r border-slate-300 px-2 py-1 text-center" colSpan={2}>TOTAL</td>
+                                        <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{formatComputedNumber(gradacionTotals.a)}</td>
+                                        <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{formatComputedNumber(gradacionTotals.b)}</td>
+                                        <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{formatComputedNumber(gradacionTotals.c)}</td>
+                                        <td className="border-t border-slate-300 px-2 py-1 text-center">{formatComputedNumber(gradacionTotals.d)}</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -543,13 +642,23 @@ export default function AbrassForm() {
                                             <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{row.unidad}</td>
                                             {[0, 1, 2, 3].map((idx) => (
                                                 <td key={`${row.key}-${idx}`} className={`border-t ${idx < 3 ? 'border-r' : ''} border-slate-300 p-1`}>
-                                                    <input
-                                                        type="number"
-                                                        step="any"
-                                                        className={denseInputClass}
-                                                        value={form[row.key][idx] ?? ''}
-                                                        onChange={(e) => setQuad(row.key, idx, e.target.value)}
-                                                    />
+                                                    {row.key === 'item_a_masa_original_g' ? (
+                                                        <input
+                                                            type="text"
+                                                            className={`${denseInputClass} cursor-not-allowed bg-slate-100 text-center font-medium text-slate-700`}
+                                                            value={formatComputedNumber(itemAMasaOriginalComputed[idx])}
+                                                            readOnly
+                                                            tabIndex={-1}
+                                                        />
+                                                    ) : (
+                                                        <input
+                                                            type="number"
+                                                            step="any"
+                                                            className={denseInputClass}
+                                                            value={form[row.key][idx] ?? ''}
+                                                            onChange={(e) => setQuad(row.key, idx, e.target.value)}
+                                                        />
+                                                    )}
                                                 </td>
                                             ))}
                                         </tr>
@@ -574,27 +683,37 @@ export default function AbrassForm() {
                                     <tr>
                                         <td className="border-t border-r border-slate-300 px-2 py-1">Horno</td>
                                         <td className="border-t border-r border-slate-300 p-1">
-                                            <input className={denseInputClass} value={form.horno_codigo ?? ''} onChange={(e) => setField('horno_codigo', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                            <select className={denseInputClass} value={form.horno_codigo ?? '-'} onChange={(e) => setField('horno_codigo', e.target.value)}>
+                                                {withCurrentOption(form.horno_codigo, EQUIPO_OPTIONS.horno_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                         <td className="border-t border-r border-slate-300 px-2 py-1">Malla No. 12</td>
                                         <td className="border-t border-slate-300 p-1">
-                                            <input className={denseInputClass} value={form.malla_no_12_codigo ?? ''} onChange={(e) => setField('malla_no_12_codigo', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                            <select className={denseInputClass} value={form.malla_no_12_codigo ?? '-'} onChange={(e) => setField('malla_no_12_codigo', e.target.value)}>
+                                                {withCurrentOption(form.malla_no_12_codigo, EQUIPO_OPTIONS.malla_no_12_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td className="border-t border-r border-slate-300 px-2 py-1">Máquina Los Ángeles</td>
                                         <td className="border-t border-r border-slate-300 p-1">
-                                            <input className={denseInputClass} value={form.maquina_los_angeles_codigo ?? ''} onChange={(e) => setField('maquina_los_angeles_codigo', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                            <select className={denseInputClass} value={form.maquina_los_angeles_codigo ?? '-'} onChange={(e) => setField('maquina_los_angeles_codigo', e.target.value)}>
+                                                {withCurrentOption(form.maquina_los_angeles_codigo, EQUIPO_OPTIONS.maquina_los_angeles_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                         <td className="border-t border-r border-slate-300 px-2 py-1">Malla No. 4</td>
                                         <td className="border-t border-slate-300 p-1">
-                                            <input className={denseInputClass} value={form.malla_no_4_codigo ?? ''} onChange={(e) => setField('malla_no_4_codigo', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                            <select className={denseInputClass} value={form.malla_no_4_codigo ?? '-'} onChange={(e) => setField('malla_no_4_codigo', e.target.value)}>
+                                                {withCurrentOption(form.malla_no_4_codigo, EQUIPO_OPTIONS.malla_no_4_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td className="border-t border-r border-slate-300 px-2 py-1">Balanza 1g</td>
                                         <td className="border-t border-r border-slate-300 p-1">
-                                            <input className={denseInputClass} value={form.balanza_1g_codigo ?? ''} onChange={(e) => setField('balanza_1g_codigo', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                            <select className={denseInputClass} value={form.balanza_1g_codigo ?? '-'} onChange={(e) => setField('balanza_1g_codigo', e.target.value)}>
+                                                {withCurrentOption(form.balanza_1g_codigo, EQUIPO_OPTIONS.balanza_1g_codigo).map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                            </select>
                                         </td>
                                         <td className="border-t border-r border-slate-300 px-2 py-1"></td>
                                         <td className="border-t border-slate-300 p-1"></td>
@@ -620,7 +739,9 @@ export default function AbrassForm() {
                             <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
                                 <div className="border-b border-slate-300 px-2 py-1 text-sm font-semibold">Revisado:</div>
                                 <div className="space-y-2 p-2">
-                                    <input className={denseInputClass} value={form.revisado_por ?? ''} onChange={(e) => setField('revisado_por', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                    <select className={denseInputClass} value={form.revisado_por ?? '-'} onChange={(e) => setField('revisado_por', e.target.value)}>
+                                        {REVISORES.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                     <input
                                         className={denseInputClass}
                                         value={form.revisado_fecha ?? ''}
@@ -635,7 +756,9 @@ export default function AbrassForm() {
                             <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
                                 <div className="border-b border-slate-300 px-2 py-1 text-sm font-semibold">Aprobado:</div>
                                 <div className="space-y-2 p-2">
-                                    <input className={denseInputClass} value={form.aprobado_por ?? ''} onChange={(e) => setField('aprobado_por', e.target.value)} autoComplete="off" data-lpignore="true" />
+                                    <select className={denseInputClass} value={form.aprobado_por ?? '-'} onChange={(e) => setField('aprobado_por', e.target.value)}>
+                                        {APROBADORES.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                                    </select>
                                     <input
                                         className={denseInputClass}
                                         value={form.aprobado_fecha ?? ''}
