@@ -648,23 +648,6 @@ export default function AbrassForm() {
                                 </tbody>
                             </table>
                         </div>
-                        <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
-                            <div className="border-b border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800">
-                                Referencia visual (Abrasion menores)
-                            </div>
-                            <div className="p-3">
-                                <img
-                                    src={AbrasionesMenoresImg}
-                                    alt="Referencia de abrasiones menores - tabla de gradación"
-                                    className="w-full max-h-[420px] rounded-md border border-slate-200 object-contain bg-white"
-                                    loading="lazy"
-                                    decoding="async"
-                                />
-                                <p className="mt-2 text-[11px] text-slate-600">
-                                    Tabla guía para gradaciones y masa de muestra (formato Excel oficial).
-                                </p>
-                            </div>
-                        </div>
                         <div className="overflow-hidden rounded-lg border border-slate-300">
                             <table className="w-full table-fixed text-sm">
                                 <thead className="bg-slate-100 text-xs font-semibold text-slate-800">
@@ -731,6 +714,23 @@ export default function AbrassForm() {
                             </table>
                             <div className="border-t border-slate-300 px-3 py-2 text-xs text-slate-700">
                                 (*) la perdida por lavado no superara en mas del 0.2% de la muestra original
+                            </div>
+                        </div>
+                        <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
+                            <div className="border-b border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800">
+                                Referencia visual (Abrasion menores)
+                            </div>
+                            <div className="p-3">
+                                <img
+                                    src={AbrasionesMenoresImg}
+                                    alt="Referencia de abrasiones menores - tabla de gradación"
+                                    className="w-full max-h-[420px] rounded-md border border-slate-200 object-contain bg-white"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <p className="mt-2 text-[11px] text-slate-600">
+                                    Tabla guía para gradaciones y masa de muestra (formato Excel oficial).
+                                </p>
                             </div>
                         </div>
                         <div className="overflow-hidden rounded-lg border border-slate-300">
