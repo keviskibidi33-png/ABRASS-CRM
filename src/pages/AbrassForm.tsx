@@ -669,13 +669,13 @@ export default function AbrassForm() {
                             <table className="w-full table-fixed text-sm">
                                 <thead className="bg-slate-100 text-xs font-semibold text-slate-800">
                                     <tr>
-                                        <th className="w-10 border-b border-r border-slate-300 py-1">ITEM</th>
-                                        <th className="border-b border-r border-slate-300 py-1">DESCRIPCIÓN</th>
+                                        <th className="w-12 border-b border-r border-slate-300 py-1">ITEM</th>
+                                        <th className="w-24 border-b border-r border-slate-300 py-1">DESCRIPCIÓN</th>
                                         <th className="w-12 border-b border-r border-slate-300 py-1">UND</th>
-                                        <th className="w-28 border-b border-r border-slate-300 py-1">Gradación A</th>
-                                        <th className="w-28 border-b border-r border-slate-300 py-1">Gradación B</th>
-                                        <th className="w-28 border-b border-r border-slate-300 py-1">Gradación C</th>
-                                        <th className="w-28 border-b border-slate-300 py-1">Gradación D</th>
+                                        <th className="w-32 border-b border-r border-slate-300 py-1">Gradación A</th>
+                                        <th className="w-32 border-b border-r border-slate-300 py-1">Gradación B</th>
+                                        <th className="w-32 border-b border-r border-slate-300 py-1">Gradación C</th>
+                                        <th className="w-32 border-b border-slate-300 py-1">Gradación D</th>
                                     </tr>
                                 </thead>
                                 <tbody>
