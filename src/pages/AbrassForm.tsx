@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Beaker, Download, Loader2, Trash2 } from 'lucide-react'
 import { getAbrassEnsayoDetail, saveAbrassEnsayo, saveAndDownloadAbrassExcel } from '@/services/api'
 import type { AbrassPayload } from '@/types'
+import AbrasionesMenoresImg from '@/assets/ImagenAbrasionesMenores.png'
 
 const DRAFT_KEY = 'abrass_form_draft_v1'
 const DEBOUNCE_MS = 700
@@ -600,6 +601,23 @@ export default function AbrassForm() {
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                        <div className="overflow-hidden rounded-lg border border-slate-300 bg-slate-50">
+                            <div className="border-b border-slate-300 px-3 py-2 text-xs font-semibold text-slate-800">
+                                Referencia visual (Abrasion menores)
+                            </div>
+                            <div className="p-3">
+                                <img
+                                    src={AbrasionesMenoresImg}
+                                    alt="Referencia de abrasiones menores - tabla de gradación"
+                                    className="w-full max-h-[420px] rounded-md border border-slate-200 object-contain bg-white"
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                                <p className="mt-2 text-[11px] text-slate-600">
+                                    Tabla guía para gradaciones y masa de muestra (formato Excel oficial).
+                                </p>
+                            </div>
                         </div>
                         <div className="overflow-hidden rounded-lg border border-slate-300">
                             <table className="w-full table-fixed text-sm">
