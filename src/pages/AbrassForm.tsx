@@ -89,7 +89,7 @@ const sanitizeGradaciones = (payload: AbrassPayload): AbrassPayload => ({
 const sumGradacionColumn = (key: TamizFieldKey, values: Array<number | null>) =>
     Number(
         values
-            .reduce((acc, current, idx) => acc + (isGradacionEditable(key, idx) ? (current ?? 0) : 0), 0)
+            .reduce((acc: number, current, idx) => acc + (isGradacionEditable(key, idx) ? (current ?? 0) : 0), 0)
             .toFixed(4),
     )
 
@@ -384,8 +384,6 @@ export default function AbrassForm() {
     }, [ensayoId, form])
 
 
-    const requiresSI = form.requiere_lavado === 'SI'
-    const requiresNO = form.requiere_lavado === 'NO'
     const denseInputClass =
         'h-8 w-full rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-900 shadow-sm transition focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500/35'
 
@@ -548,8 +546,8 @@ export default function AbrassForm() {
                                             <td className="border-b border-slate-300 px-1 py-1 text-center" colSpan={2}>
                                                 <select
                                                     className={denseInputClass}
-                                                    value={form.requiere_lavado}
-                                                    onChange={(e) => setField('requiere_lavado', e.target.value)}
+                                                    value={form.requiere_lavado ?? '-'}
+                                                    onChange={(e) => setField('requiere_lavado', e.target.value as any)}
                                                 >
                                                     <option value="-">-</option>
                                                     <option value="SI">SI</option>
