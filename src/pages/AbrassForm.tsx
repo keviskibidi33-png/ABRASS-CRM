@@ -246,6 +246,59 @@ export default function AbrassForm() {
         }
     }, [ensayoId])
 
+    useEffect(() => {
+        setForm((prev) => {
+            const nextE = [...prev.item_e_perdida_abrasion_pct]
+            const nextF = [...prev.item_f_perdida_lavado_pct]
+            let changed = false
+
+            for (let i = 0; i < 4; i++) {
+                const a = itemAMasaOriginalComputed[i]
+                const b = prev.item_b_masa_final_g[i]
+                const d = prev.item_d_masa_final_lavada_seca_constante_g[i]
+
+                if (a && a > 0) {
+                    if (d != null) {
+                        const valE = Number(((a - d) / a * 100).toFixed(4))
+                        if (nextE[i] !== valE) {
+                            nextE[i] = valE
+                            changed = true
+                        }
+                    } else if (nextE[i] !== null) {
+                        nextE[i] = null
+                        changed = true
+                    }
+
+                    if (b != null && d != null) {
+                        const valF = Number(((b - d) / a * 100).toFixed(4))
+                        if (nextF[i] !== valF) {
+                            nextF[i] = valF
+                            changed = true
+                        }
+                    } else if (nextF[i] !== null) {
+                        nextF[i] = null
+                        changed = true
+                    }
+                } else {
+                    if (nextE[i] !== null || nextF[i] !== null) {
+                        nextE[i] = null
+                        nextF[i] = null
+                        changed = true
+                    }
+                }
+            }
+
+            if (changed) {
+                return {
+                    ...prev,
+                    item_e_perdida_abrasion_pct: nextE,
+                    item_f_perdida_lavado_pct: nextF,
+                }
+            }
+            return prev
+        })
+    }, [itemAMasaOriginalComputed, form.item_b_masa_final_g, form.item_d_masa_final_lavada_seca_constante_g])
+
     const perdidaAbrasionPromedio = useMemo(() => {
         const vals = form.item_e_perdida_abrasion_pct.filter((v): v is number => v != null)
         return vals.length ? Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(4)) : null
@@ -288,6 +341,7 @@ export default function AbrassForm() {
                 sumGradacionColumn('gradacion_c_tamiz_g', form.gradacion_c_tamiz_g),
                 sumGradacionColumn('gradacion_d_tamiz_g', form.gradacion_d_tamiz_g),
             ],
+            numero_revoluciones: 500,
         })
         setLoading(true)
         try {
@@ -441,7 +495,7 @@ export default function AbrassForm() {
                                                 <input
                                                     type="number"
                                                     step="any"
-                                                    className={denseInputClass}
+                                                    className={`${denseInputClass} text-center`}
                                                     value={form.masa_muestra_inicial_g ?? ''}
                                                     onChange={(e) => setField('masa_muestra_inicial_g', parseNum(e.target.value))}
                                                 />
@@ -454,7 +508,7 @@ export default function AbrassForm() {
                                                 <input
                                                     type="number"
                                                     step="any"
-                                                    className={denseInputClass}
+                                                    className={`${denseInputClass} text-center`}
                                                     value={form.masa_muestra_inicial_seca_despues_lavado_g ?? ''}
                                                     onChange={(e) => setField('masa_muestra_inicial_seca_despues_lavado_g', parseNum(e.target.value))}
                                                 />
@@ -467,7 +521,7 @@ export default function AbrassForm() {
                                                 <input
                                                     type="number"
                                                     step="any"
-                                                    className={denseInputClass}
+                                                    className={`${denseInputClass} text-center`}
                                                     value={form.masa_muestra_inicial_seca_constante_despues_lavado_g ?? ''}
                                                     onChange={(e) => setField('masa_muestra_inicial_seca_constante_despues_lavado_g', parseNum(e.target.value))}
                                                 />
@@ -490,23 +544,16 @@ export default function AbrassForm() {
                                     <tbody>
                                         <tr>
                                             <td className="border-b border-r border-slate-300 px-2 py-1">Selección</td>
-                                            <td className="w-[70px] border-b border-r border-slate-300 px-1 py-1 text-center">
-                                                <button
-                                                    type="button"
-                                                    className={`h-8 w-full rounded-md border text-xs font-semibold ${requiresSI ? 'border-slate-700 bg-slate-200 text-slate-900' : 'border-slate-300 bg-white text-slate-700'}`}
-                                                    onClick={() => setField('requiere_lavado', 'SI')}
+                                            <td className="border-b border-slate-300 px-1 py-1 text-center" colSpan={2}>
+                                                <select
+                                                    className={denseInputClass}
+                                                    value={form.requiere_lavado}
+                                                    onChange={(e) => setField('requiere_lavado', e.target.value)}
                                                 >
-                                                    SI
-                                                </button>
-                                            </td>
-                                            <td className="w-[70px] border-b border-slate-300 px-1 py-1 text-center">
-                                                <button
-                                                    type="button"
-                                                    className={`h-8 w-full rounded-md border text-xs font-semibold ${requiresNO ? 'border-slate-700 bg-slate-200 text-slate-900' : 'border-slate-300 bg-white text-slate-700'}`}
-                                                    onClick={() => setField('requiere_lavado', 'NO')}
-                                                >
-                                                    NO
-                                                </button>
+                                                    <option value="-">-</option>
+                                                    <option value="SI">SI</option>
+                                                    <option value="NO">NO</option>
+                                                </select>
                                             </td>
                                         </tr>
                                         <tr>
@@ -515,9 +562,9 @@ export default function AbrassForm() {
                                                 <input
                                                     type="number"
                                                     step="any"
-                                                    className={denseInputClass}
-                                                    value={form.numero_revoluciones ?? ''}
-                                                    onChange={(e) => setField('numero_revoluciones', parseNum(e.target.value))}
+                                                    className={`${denseInputClass} cursor-not-allowed bg-slate-100 text-center font-bold`}
+                                                    value={500}
+                                                    readOnly
                                                 />
                                             </td>
                                         </tr>
@@ -660,11 +707,11 @@ export default function AbrassForm() {
                                             <td className="border-t border-r border-slate-300 px-2 py-1 text-center">{row.unidad}</td>
                                             {[0, 1, 2, 3].map((idx) => (
                                                 <td key={`${row.key}-${idx}`} className={`border-t ${idx < 3 ? 'border-r' : ''} border-slate-300 p-1`}>
-                                                    {row.key === 'item_a_masa_original_g' ? (
+                                                    {row.key === 'item_a_masa_original_g' || row.key === 'item_e_perdida_abrasion_pct' || row.key === 'item_f_perdida_lavado_pct' ? (
                                                         <input
                                                             type="text"
                                                             className={`${denseInputClass} cursor-not-allowed bg-slate-100 text-center font-medium text-slate-700`}
-                                                            value={formatComputedNumber(itemAMasaOriginalComputed[idx])}
+                                                            value={form[row.key][idx] != null ? formatComputedNumber(form[row.key][idx] as number) : (row.key === 'item_a_masa_original_g' ? formatComputedNumber(itemAMasaOriginalComputed[idx]) : '-')}
                                                             readOnly
                                                             tabIndex={-1}
                                                         />
@@ -672,7 +719,7 @@ export default function AbrassForm() {
                                                         <input
                                                             type="number"
                                                             step="any"
-                                                            className={denseInputClass}
+                                                            className={`${denseInputClass} text-center`}
                                                             value={form[row.key][idx] ?? ''}
                                                             onChange={(e) => setQuad(row.key, idx, e.target.value)}
                                                         />
