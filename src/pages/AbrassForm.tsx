@@ -246,6 +246,20 @@ export default function AbrassForm() {
         }
     }, [ensayoId])
 
+    const gradacionTotals = useMemo(
+        () => ({
+            a: sumGradacionColumn('gradacion_a_tamiz_g', form.gradacion_a_tamiz_g),
+            b: sumGradacionColumn('gradacion_b_tamiz_g', form.gradacion_b_tamiz_g),
+            c: sumGradacionColumn('gradacion_c_tamiz_g', form.gradacion_c_tamiz_g),
+            d: sumGradacionColumn('gradacion_d_tamiz_g', form.gradacion_d_tamiz_g),
+        }),
+        [form.gradacion_a_tamiz_g, form.gradacion_b_tamiz_g, form.gradacion_c_tamiz_g, form.gradacion_d_tamiz_g],
+    )
+    const itemAMasaOriginalComputed = useMemo(
+        () => [gradacionTotals.a, gradacionTotals.b, gradacionTotals.c, gradacionTotals.d] as const,
+        [gradacionTotals.a, gradacionTotals.b, gradacionTotals.c, gradacionTotals.d],
+    )
+
     useEffect(() => {
         setForm((prev) => {
             const nextE = [...prev.item_e_perdida_abrasion_pct]
@@ -369,19 +383,6 @@ export default function AbrassForm() {
         }
     }, [ensayoId, form])
 
-    const gradacionTotals = useMemo(
-        () => ({
-            a: sumGradacionColumn('gradacion_a_tamiz_g', form.gradacion_a_tamiz_g),
-            b: sumGradacionColumn('gradacion_b_tamiz_g', form.gradacion_b_tamiz_g),
-            c: sumGradacionColumn('gradacion_c_tamiz_g', form.gradacion_c_tamiz_g),
-            d: sumGradacionColumn('gradacion_d_tamiz_g', form.gradacion_d_tamiz_g),
-        }),
-        [form.gradacion_a_tamiz_g, form.gradacion_b_tamiz_g, form.gradacion_c_tamiz_g, form.gradacion_d_tamiz_g],
-    )
-    const itemAMasaOriginalComputed = useMemo(
-        () => [gradacionTotals.a, gradacionTotals.b, gradacionTotals.c, gradacionTotals.d] as const,
-        [gradacionTotals.a, gradacionTotals.b, gradacionTotals.c, gradacionTotals.d],
-    )
 
     const requiresSI = form.requiere_lavado === 'SI'
     const requiresNO = form.requiere_lavado === 'NO'
