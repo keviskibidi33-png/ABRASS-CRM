@@ -573,6 +573,14 @@ export default function AbrassForm() {
                         </div>
                         <div className="overflow-hidden rounded-lg border border-slate-300">
                             <table className="w-full table-fixed text-sm">
+                                <colgroup>
+                                    <col className="w-24" />
+                                    <col className="w-24" />
+                                    <col className="w-32" />
+                                    <col className="w-32" />
+                                    <col className="w-32" />
+                                    <col className="w-32" />
+                                </colgroup>
                                 <thead className="bg-slate-100 text-xs font-semibold text-slate-800">
                                     <tr>
                                         <th className="border-b border-r border-slate-300 py-1" colSpan={2}>TAMIZ (in)</th>
@@ -650,6 +658,15 @@ export default function AbrassForm() {
                         </div>
                         <div className="overflow-hidden rounded-lg border border-slate-300">
                             <table className="w-full table-fixed text-sm">
+                                <colgroup>
+                                    <col className="w-12" />
+                                    <col className="w-24" />
+                                    <col className="w-12" />
+                                    <col className="w-32" />
+                                    <col className="w-32" />
+                                    <col className="w-32" />
+                                    <col className="w-32" />
+                                </colgroup>
                                 <thead className="bg-slate-100 text-xs font-semibold text-slate-800">
                                     <tr>
                                         <th className="w-12 border-b border-r border-slate-300 py-1">ITEM</th>
