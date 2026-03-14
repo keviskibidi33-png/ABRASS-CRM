@@ -440,7 +440,7 @@ export default function AbrassForm() {
                                 <tr>
                                     <td className="border-r border-t border-slate-300 p-1">
                                         <input
-                                            className={denseInputClass}
+                                            className={`${denseInputClass} text-center`}
                                             value={form.muestra}
                                             onChange={(e) => setField('muestra', e.target.value)}
                                             onBlur={() => setField('muestra', normalizeMuestraCode(form.muestra))}
@@ -450,7 +450,7 @@ export default function AbrassForm() {
                                     </td>
                                     <td className="border-r border-t border-slate-300 p-1">
                                         <input
-                                            className={denseInputClass}
+                                            className={`${denseInputClass} text-center`}
                                             value={form.numero_ot}
                                             onChange={(e) => setField('numero_ot', e.target.value)}
                                             onBlur={() => setField('numero_ot', normalizeNumeroOtCode(form.numero_ot))}
@@ -460,7 +460,7 @@ export default function AbrassForm() {
                                     </td>
                                     <td className="border-r border-t border-slate-300 p-1">
                                         <input
-                                            className={denseInputClass}
+                                            className={`${denseInputClass} text-center`}
                                             value={form.fecha_ensayo}
                                             onChange={(e) => setField('fecha_ensayo', e.target.value)}
                                             onBlur={() => setField('fecha_ensayo', normalizeFlexibleDate(form.fecha_ensayo))}
@@ -471,7 +471,7 @@ export default function AbrassForm() {
                                     </td>
                                     <td className="border-t border-slate-300 p-1">
                                         <input
-                                            className={denseInputClass}
+                                            className={`${denseInputClass} text-center`}
                                             value={form.realizado_por}
                                             onChange={(e) => setField('realizado_por', e.target.value)}
                                             autoComplete="off"
