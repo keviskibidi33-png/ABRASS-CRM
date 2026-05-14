@@ -78,7 +78,7 @@ const ESFERAS_RANGO = ['4975 - 5025', '4555 - 4605', '3310 - 3350', '2485 - 2515
 
 const EQUIPO_OPTIONS = {
 
-    horno_codigo: ['-', 'EQP-0049'],
+    horno_codigo: ['-', 'EQP-0150'],
 
     maquina_los_angeles_codigo: ['-', 'EQP-0043'],
 
